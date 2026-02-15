@@ -45,3 +45,69 @@ An AI-powered, resume-aware chatbot that helps job seekers analyze their resume 
 
 ```bash
 pip install streamlit pypdf transformers torch
+
+▶️ Run the Project
+streamlit run app.py
+
+
+Open in browser:
+
+http://localhost:8501
+
+🧪 Example Questions You Can Ask
+
+Am I suitable for this job?
+
+What skills are missing in my resume?
+
+How can I improve my resume?
+
+What interview questions can be asked for this role?
+
+How much salary can I expect as a fresher?
+
+🌟 What Makes This Project Unique?
+
+Resume-aware chatbot (answers depend on uploaded resume)
+
+Explainable fit score instead of black-box output
+
+Hybrid intelligence (AI + rule-based logic)
+
+Completely free and cost-efficient
+
+Placement-focused real-world use case
+
+⚠️ Limitations
+
+Uses a lightweight open-source model, so answers may be generic
+
+Does not provide real-time company-specific salary data
+
+Intended for educational and career guidance purposes
+
+🔮 Future Enhancements
+
+ATS resume score calculation
+
+Better instruction-following open-source models
+
+Resume improvement suggestions with examples
+
+User login and resume history
+
+Cloud deployment
+
+🎓 Ideal For
+
+Final year projects
+
+Placement preparation
+
+Resume screening practice
+
+AI/ML learning demonstrations
+
+📜 License
+
+This project is developed for educational purposes only.
