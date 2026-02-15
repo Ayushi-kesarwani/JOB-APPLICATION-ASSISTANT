@@ -1,0 +1,133 @@
+import streamlit as st
+from pypdf import PdfReader
+from transformers import pipeline
+
+# -------------------- Resume Reader --------------------
+def extract_resume_text(pdf_file):
+    reader = PdfReader(pdf_file)
+    text = ""
+    for page in reader.pages:
+        page_text = page.extract_text()
+        if page_text:
+            text += page_text
+    return text.lower()
+
+# -------------------- Skill Matching --------------------
+SKILLS = [
+    "python", "machine learning", "deep learning", "sql",
+    "nlp", "flask", "django", "data analysis",
+    "data science", "tensorflow", "pytorch", "statistics"
+]
+
+def skill_analysis(resume_text, job_desc):
+    matched = []
+    missing = []
+    job_desc = job_desc.lower()
+
+    for skill in SKILLS:
+        if skill in job_desc:
+            if skill in resume_text:
+                matched.append(skill)
+            else:
+                missing.append(skill)
+
+    score = int((len(matched) / max(1, len(matched) + len(missing))) * 100)
+    return matched, missing, score
+def salary_estimator(resume_text):
+    skills = resume_text.lower()
+
+    if "machine learning" in skills or "data science" in skills:
+        return "As a fresher in India, expected salary is around 4–8 LPA depending on company."
+    elif "python" in skills:
+        return "As a fresher Python developer, expected salary is around 3–6 LPA."
+    else:
+        return "For a fresher, typical starting salary is around 2.5–4 LPA."
+
+# -------------------- FREE LLM (NO API KEY) --------------------
+@st.cache_resource
+def load_llm():
+    return pipeline(
+        "text-generation",
+        model="distilgpt2"
+    )
+
+llm = load_llm()
+
+def ask_llm(resume, job, question):
+    q = question.lower()
+
+    # --- HANDLE SALARY WITHOUT AI ---
+    if "salary" in q or "package" in q or "ctc" in q:
+        return salary_estimator(resume)
+
+    # --- AI FOR OTHER QUESTIONS ---
+    prompt = f"Q: {question}\nA:"
+    result = llm(
+        prompt,
+        max_new_tokens=60,
+        do_sample=True,
+        temperature=0.6,
+        repetition_penalty=1.5,
+        pad_token_id=50256
+    )
+
+    text = result[0]["generated_text"]
+    answer = text.split("A:")[-1].strip()
+    return answer
+
+# -------------------- UI --------------------
+st.set_page_config(page_title="Job Application Assistant", layout="wide")
+st.title("🤖 Job Application Assistant Chatbot")
+
+st.sidebar.header("Upload Resume")
+resume_file = st.sidebar.file_uploader("Upload Resume (PDF)", type=["pdf"])
+
+job_desc = st.text_area("📄 Paste Job Description Here", height=200)
+
+if resume_file and job_desc.strip():
+    resume_text = extract_resume_text(resume_file)[:1500]
+
+    if st.button("🔍 Analyze Resume"):
+        matched, missing, score = skill_analysis(resume_text, job_desc)
+
+        st.subheader("📊 Resume Analysis Result")
+        st.success(f"✅ Fit Score: {score}%")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.subheader("✔ Matching Skills")
+            if matched:
+                for s in matched:
+                    st.write("✔", s)
+            else:
+                st.write("No matching skills found")
+
+        with col2:
+            st.subheader("❌ Missing Skills")
+            if missing:
+                for s in missing:
+                    st.write("❌", s)
+            else:
+                st.write("No missing skills 🎉")
+
+        if missing:
+            st.info("📌 Suggestion: Learn missing skills to improve selection chances.")
+
+    st.divider()
+    st.subheader("💬 Ask Job Related Questions")
+
+    user_q = st.text_input("Ask anything about job, skills, interview, resume...")
+
+    if st.button("Get Answer"):
+        if user_q.strip() == "":
+            st.warning("Please type a question")
+        else:
+            with st.spinner("Thinking..."):
+                answer = ask_llm(resume_text, job_desc, user_q)
+            st.write("🤖 **Answer:**")
+            st.write(answer)
+
+else:
+    st.info("⬅ Please upload resume and paste job description")
+
